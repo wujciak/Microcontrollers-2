@@ -30,19 +30,11 @@ loop:
 
 	ldi r19, 0x07
 
-	rjmp petla
+	rjmp loop
 
-delay:
-	ldi r19, 0x54
+delay:	; 60Hz, żeby ludzkie oko nie widziało migania
+	ldi r19, 0x10
 loop2:
-	ldi r18, 0xfa
-loop3:
-	ldi r17, 0xfe
-loop4:
-	dec r17
-	brne loop4
-	dec r18
-	brne loop3
 	dec r19
 	brne loop2
 	ret
