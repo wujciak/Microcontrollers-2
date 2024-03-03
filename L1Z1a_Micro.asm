@@ -33,7 +33,7 @@ loop:
 delay:
 	ldi r19, 0x54
 loop2:
-	ldi r18, 0xfa
+	ldi r18, 0xf9
 loop3:
 	ldi r17, 0xfe
 loop4:
