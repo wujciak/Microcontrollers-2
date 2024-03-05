@@ -28,12 +28,10 @@ loop:
 	out portc ,r16
 	call delay
 
-	ldi r19, 0x07
-
 	rjmp loop
 
-delay:	; 60Hz, żeby ludzkie oko nie widziało migania
-	ldi r19, 0x10
+delay:
+	ldi r19, 0x18
 loop2:
 	dec r19
 	brne loop2
