@@ -8,7 +8,7 @@
 rjmp main
 .org 0x46
 
-tablica: .db 0b0000_0000, 0b0000_0001, 0b0000_0010, 0b0000_0011, 0b0000_0100, 0b0000_0101, 0b0000_0110, 0b0000_0111, 0b0000_1000, 0b0000_1001, 0b0000_1010, 0b0000_1011, 0b0000_1100, 0b0000_1101, 0b0000_1110, 0b0000_1111
+tablica: .db 0b00000000, 0b00000001, 0b00000010, 0b00000011, 0b00000100, 0b00000101, 0b00000110, 0b00000111, 0b00001000, 0b00001001, 0b00001010, 0b00001011, 0b00001100, 0b00001101, 0b00001110, 0b00001111
 
 main:
 	ldi r16, 0xff
@@ -18,14 +18,30 @@ main:
 	ldi r16, 0x00
 	out ddrb, r16
 
-	; tu coś będzie
+	ldi r16, 0xff
+	ldi r17, 0xff
 
 loop:
 	ldi zl, low(tablica<<1)
 	ldi zh, high(tablica<<1)
 
-	in r18 pinb
+	in r18, pinb
 
-	; tu coś będzie
+	cpi r18, 0xff
+	brbs 1, none
 
+	cpi r18, 0x0f
+	brbs 0, none
+
+	eor r18, r16
+	add zl, r18
+	lpm r16, z
+	eor r16, r17
+	out portc, r16
+
+	rjmp loop
+
+none:
+	ldi r16, 0xff
+	out portc, r16
 	rjmp loop
