@@ -13,9 +13,6 @@ main:
 	ldi r16, high(ramend)
 	out sph, r16
 
-	ldi zl, low(delay)
-	ldi zh, high(delay)
-
 	ldi r16, 0xff
 	out ddrc, r16
 
