@@ -1,0 +1,31 @@
+;
+; Autor: Jakub Wójciak
+; Lista 1 
+; Zadanie 2
+;
+
+.cseg
+rjmp main
+.org 0x46
+
+tablica: .db 0b0000_0000, 0b0000_0001, 0b0000_0010, 0b0000_0011, 0b0000_0100, 0b0000_0101, 0b0000_0110, 0b0000_0111, 0b0000_1000, 0b0000_1001, 0b0000_1010, 0b0000_1011, 0b0000_1100, 0b0000_1101, 0b0000_1110, 0b0000_1111
+
+main:
+	ldi r16, 0xff
+	out ddrc, r16
+	out portc, r16
+
+	ldi r16, 0x00
+	out ddrb, r16
+
+	; tu coś będzie
+
+loop:
+	ldi zl, low(tablica<<1)
+	ldi zh, high(tablica<<1)
+
+	in r18 pinb
+
+	; tu coś będzie
+
+	rjmp loop
