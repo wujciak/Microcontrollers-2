@@ -43,7 +43,7 @@ loop:
 	rjmp loop
 
 delay:
-	ldi r19, 0x18
+	ldi r19, 0x05
 loop2:
 	dec r19
 	brne loop2
