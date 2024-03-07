@@ -3,6 +3,8 @@
 ; Lista 1 
 ; Zadanie 1a
 ;
+; Świecenie diod LED na zmianę przez 1s.
+; Ten program działa dobrze tylko dla procesora 16MHz.
 
 rjmp main
 .org 0x46
