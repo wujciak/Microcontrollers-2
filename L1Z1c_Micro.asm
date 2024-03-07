@@ -3,6 +3,8 @@
 ; Lista 1 
 ; Zadanie 1c
 ;
+; Efekt stroboskopowy i jednoczesne zmniejszenie jasności.
+; Ten program działa dobrze tylko dla procesora 16MHz.
 
 rjmp main
 .org 0x46
