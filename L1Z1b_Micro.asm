@@ -3,6 +3,9 @@
 ; Lista 1 
 ; Zadanie 1b
 ;
+; Efekt stroboskopowy.
+; Ten program działa dobrze tylko dla procesora 16MHz
+
 
 rjmp main
 .org 0x46
@@ -33,3 +36,4 @@ loop2:
 	dec r19
 	brne loop2
 	ret
+
