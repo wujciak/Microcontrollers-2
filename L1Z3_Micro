@@ -1,0 +1,62 @@
+;
+; Autor: Jakub Wójciak
+; Lista 1 
+; Zadanie 3
+;
+
+.cseg
+rjmp start
+.org 0x46
+
+start:
+	ldi r16, low(ramend)
+	out spl, r16
+	ldi r16, high(ramend)
+	out sph, r16
+
+	ldi r16, 0x00
+	out ddrb, r16
+
+	ldi r16, 0xff
+	out ddrc, r16
+	out portc, r16
+
+	ldi r16, 0xff
+
+loop:
+	in r18, pinb
+	call delay
+	in r20, pinb
+
+	cp r18, r20
+	brbs 1, change
+
+	rjmp loop
+
+change:
+	cpi r18, 0xbf
+	breq pressed6
+
+	cpi r18, 0xfb
+	breq pressed2
+
+	rjmp loop
+
+pressed6:	;tu do poprawy
+	inc r20
+	eor r20, r16
+	out portc, r20
+	rjmp loop
+
+pressed2:	; tu też do poprawy
+	dec r20
+	eor r20, r16
+	out portc, r20
+	rjmp loop
+
+delay:
+	ldi r16, 0xff
+loop2:
+	dec r16
+	brne loop2
+	ret
