@@ -22,52 +22,47 @@ start:
 	out portc, r16
 
 	ldi r16, 0xff
-	ldi r19, 0x00
+	ldi r19, 0x00	;licznik
 
 main_loop:
-    in r17, pinb	;stan bieżący do pinb
-    call delay		;odczekaj około 49ms
-	mov r18, r17	;zapisuje stan przycisku do porownania
-    in r17, pinb	;stan bieżący do pinb
-    cp r18, r17		;porównanie stanu poprzedniego i bieżącego
-    breq check
+    	call read_stable	;odczekaj około 41ms
 
-	rjmp main_loop
+	cpi r17, 0xff
+	breq main_loop
 
-check:
-    cpi r17, 0b11110111	;sprawdź przycisk 3
-    breq button_3
-
-    cpi r17, 0b01111111	;sprawdź przycisk 7
-    breq button_7 
-
-    rjmp main_loop
-
-button_3:	;zwiększ licznik
+	sbrc r17, 3
 	inc r19
-	eor r19, r16
-    out portc, r19
-	eor r19, r16
-    rjmp main_loop
-
-button_7:	;zmniejsz licznik
+	sbrc r17, 7
 	dec r19
-	eor r19, r16
-    out portc, r19
-	eor r19, r16
-    rjmp main_loop
 
-delay:
-    ldi r23, 0xFF
-delay_loop:
-	ldi r22, 0xff
-delay_loop2:
-	ldi r21, 0x03
-delay_loop3:
-    dec r21
-    brne delay_loop3
-	dec r22
-	brne delay_loop2
-	dec r23
-	brne delay_loop
+	eor r19, r16
+    	out portc, r19
+	eor r19, r16
+read:
+	call read_stable
+	cpi r17, 0xff
+	breq main_loop
+    rjmp read
+
+read_stable:
+	in r17, pinb	;stan bieżący do pinb
+
+	delay:
+		ldi r23, 0xff/2
+	delay_loop:
+		ldi r22, 0xff
+	delay_loop2:
+		ldi r21, 0x01
+	delay_loop3:
+		dec r21
+		brne delay_loop3
+		dec r22
+		brne delay_loop2
+		dec r23
+		brne delay_loop
+
+		mov r18, r17	;zapisuje stan przycisku do porownania
+		in r17, pinb	;stan bieżący do pinb
+		cp r18, r17	;porównanie stanu poprzedniego i bieżącego
+		brne delay
     ret
