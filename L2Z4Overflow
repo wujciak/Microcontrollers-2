@@ -47,4 +47,10 @@ interrupt:
 	com r17
 	out portc, r17
 	com r17
+
+	ldi r16, 149
+	out tcnt1h, r16
+	ldi r16, 128
+	out tcnt1l, r16
+	
 	reti
