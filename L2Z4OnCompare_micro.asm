@@ -26,7 +26,7 @@ start:
 	out tccr1b, r16
 
 	;Ustawienie wartości dla odliczania sekundy (16-bitowy rejestr porównawczy)
-	ldi r16, 0x1d
+	ldi r16, 0x1b
 	out ocr1ah, r16
 	ldi r16, 0x04
 	out ocr1al, r16
