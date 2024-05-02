@@ -7,6 +7,8 @@
 .def process = r17
 .def sim_process = r18
 .def err = r19
+.equ start_button = 6
+.equ stop_button = 7
 
 .org 0x00
 jmp init
@@ -18,22 +20,22 @@ init:
     ldi temp, low(ramend)
     out spl, temp
 
-    ldi temp, 0xff
+    ldi temp, 0xff ; Ustawienie wszystkich pinów portu C jako wyjścia
 	out ddrc, temp
 	out portc, temp
 
-	ldi temp, 0x00
+	ldi temp, 0x00 ; Ustawienie wszystkich pinów portu B jako wejścia
 	out ddrb, temp
 
 	ldi process, 0
     ldi sim_process, 0xff
 	ldi err, 0b0111_1111
 
-main: ;S1
-	; Odczytaj stan przycisków
+; S1 - Stan bez wybranego procesu
+main:
     in temp, pinb
 
-	;Obsługa przycisków 0-2
+	; Obsługa przycisków 0-2
 	cpi temp, 0b1111_1110
     breq process_choosen
 	cpi temp, 0b1111_1101
@@ -41,7 +43,7 @@ main: ;S1
 	cpi temp, 0b1111_1011
     breq process_choosen
 
-	;Niedozwolone operacje
+	; Niedozwolone operacje
     cpi temp, 0b1111_1000
     breq error
 	cpi temp, 0b0111_1111
@@ -51,19 +53,21 @@ main: ;S1
 
 	rjmp main
 	
-process_choosen: ;S2
+; S2 - Stan obsługi wyboranego procesu
+process_choosen:
 	mov process, temp
 	out portc, process
 
-	sbis pinb, 6
+	sbis pinb, stop_button
     breq error
 
 wait_for_start_pressed:
-	sbic pinb, 7
+	sbic pinb, start_button
 	rjmp wait_for_start_pressed
 	rjmp simulate_process
 
-simulate_process: ;S4
+; S4 - Stan symulacji procesu
+simulate_process:
 	mov sim_process, process
 	sec
 	rol sim_process
@@ -73,10 +77,20 @@ simulate_process: ;S4
     out portc, sim_process
 
 wait_for_stop_pressed:
-	sbic pinb, 6
+	sbic pinb, stop_button
 	rjmp wait_for_stop_pressed
 	rjmp process_choosen
 
-error: ;S3
+; S3 - Stan obsługi błędu
+error:
     out portc, err
+
+	in temp, pinb
+	cpi temp, 0b1111_1110
+    breq process_choosen
+	cpi temp, 0b1111_1101
+    breq process_choosen
+	cpi temp, 0b1111_1011
+    breq process_choosen
+
     rjmp error
