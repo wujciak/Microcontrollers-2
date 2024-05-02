@@ -26,39 +26,57 @@ init:
 	out ddrb, temp
 
 	ldi process, 0
-    ldi sim_process, 0
-	ldi err, 0xfe
+    ldi sim_process, 0xff
+	ldi err, 0b0111_1111
 
 main: ;S1
-	;TODO: przejście do S3
+	; Odczytaj stan przycisków
     in temp, pinb
 
-    cpi temp, 0b1111_1110
+	;Obsługa przycisków 0-2
+	cpi temp, 0b1111_1110
     breq process_choosen
-    cpi temp, 0b1111_1101
+	cpi temp, 0b1111_1101
     breq process_choosen
-    cpi temp, 0b1111_1011
+	cpi temp, 0b1111_1011
     breq process_choosen
+
+	;Niedozwolone operacje
+    cpi temp, 0b1111_1000
+    breq error
+	cpi temp, 0b0111_1111
+    breq error
+	cpi temp, 0b1011_1111
+    breq error
 
 	rjmp main
-
+	
 process_choosen: ;S2
-	;TODO: przejście do S3
 	mov process, temp
 	out portc, process
+
+	sbis pinb, 6
+    breq error
+
 wait_for_start_pressed:
 	sbic pinb, 7
 	rjmp wait_for_start_pressed
 	rjmp simulate_process
 
 simulate_process: ;S4
-	;TODO: dodaj wykonanie procesu
+	mov sim_process, process
+	sec
+	rol sim_process
+	rol sim_process
+	rol sim_process
+	and sim_process, temp
+    out portc, sim_process
+
 wait_for_stop_pressed:
 	sbic pinb, 6
 	rjmp wait_for_stop_pressed
 	rjmp process_choosen
 
 error: ;S3
-	;TODO: powrót do S2
     out portc, err
     rjmp error
