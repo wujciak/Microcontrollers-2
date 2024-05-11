@@ -32,7 +32,7 @@ init:
 	ldi err, 0b0111_1111
 
 ; S1 - Stan bez wybranego procesu
-main:
+main: 
     in temp, pinb
 
 	; Obsługa przycisków 0-2
@@ -46,6 +46,12 @@ main:
 	; Niedozwolone operacje
     cpi temp, 0b1111_1000
     breq error
+	cpi temp, 0b1111_1100
+    breq error
+	cpi temp, 0b1111_1001
+    breq error
+	cpi temp, 0b1111_1010
+    breq error
 	cpi temp, 0b0111_1111
     breq error
 	cpi temp, 0b1011_1111
@@ -58,13 +64,20 @@ process_choosen:
 	mov process, temp
 	out portc, process
 
+wait_for_start_pressed:
+	call delay
+	in temp, pinb
+
+	sbis pinb, start_button
+	rjmp simulate_process
+
 	sbis pinb, stop_button
     breq error
 
-wait_for_start_pressed:
-	sbic pinb, start_button
+	sbic pinb, 0 | 1 | 2
+	rjmp process_choosen
+
 	rjmp wait_for_start_pressed
-	rjmp simulate_process
 
 ; S4 - Stan symulacji procesu
 simulate_process:
@@ -79,11 +92,14 @@ simulate_process:
 wait_for_stop_pressed:
 	sbic pinb, stop_button
 	rjmp wait_for_stop_pressed
+
 	rjmp process_choosen
 
 ; S3 - Stan obsługi błędu
 error:
     out portc, err
+	
+	call delay
 
 	in temp, pinb
 	cpi temp, 0b1111_1110
@@ -94,3 +110,18 @@ error:
     breq process_choosen
 
     rjmp error
+
+delay:
+ ldi r20, 0x40
+ loop:
+ ldi r21, 0x30
+ loop1:
+ ldi r22, 0xaf
+ loop2:
+ dec r22
+ brne loop2
+ dec r21
+ brne loop1
+ dec r20
+ brne loop
+ ret
