@@ -5,25 +5,49 @@
 
 .def temp = r16
 .def process = r17
-.def sim_process = r18
+.def temp2 = r18
 .def err = r19
-.equ start_button = 7
 .equ stop_button = 6
+.equ mask = 0b11000111
 
 .org 0x00
 jmp init
 .org 0x46
 
-; Opóźnienie do debouncingu
+; podprogram opóźnienia
 debounce_delay:
-    ldi r20, 0xff
-    ldi r21, 0xff
-debounce_loop:
+    ldi r20, 0xFF
+    ldi r21, 0xFF
+    ldi r22, 0x01
+delay_loop:
     dec r21
-    brne debounce_loop
+    brne delay_loop
     dec r20
-    brne debounce_loop
+    brne delay_loop
+    dec r22
+    brne delay_loop
     ret
+
+; podprogram symulacji procesu
+sim:
+	cpi process, 0b11111110
+	breq sim_process1
+	cpi process, 0b11111101
+	breq sim_process2
+	cpi process, 0b11111011
+	breq sim_process3
+	sim_process1:
+		ldi temp, 0b11110110
+		out portc, temp
+		ret
+	sim_process2:
+		ldi temp, 0b11101101
+		out portc, temp
+		ret
+	sim_process3:
+		ldi temp, 0b11011011
+		out portc, temp
+		ret
 
 init:
     ldi temp, high(ramend)
@@ -31,88 +55,97 @@ init:
     ldi temp, low(ramend)
     out spl, temp
 
-    ldi temp, 0xff ; Ustawienie wszystkich pinów portu C jako wyjścia
+    ldi temp, 0xFF ; wyjście
     out ddrc, temp
     out portc, temp
 
-    ldi temp, 0x00 ; Ustawienie wszystkich pinów portu B jako wejścia
+    ldi temp, 0x00 ; wejście
     out ddrb, temp
 
     ldi process, 0
-    ldi sim_process, 0xff
-    ldi err, 0b1000_0000
+    ldi err, 0b01111111
 
 ; S1 - Stan bez wybranego procesu
 main:
     in temp, pinb
+	rcall debounce_delay
+	andi temp, mask
+	cpi temp, mask
+	breq main
+   
+	cpi temp, 0b11000110
+	ldi process, 0b11111110
+	breq process_choosen
+	cpi temp, 0b11000101
+	ldi process, 0b11111101
+	breq process_choosen
+	cpi temp, 0b11000011
+	ldi process, 0b11111011
+	breq process_choosen
 
-    ; Sprawdzanie błędnych kombinacji przycisków
-    cpi temp, 0b0111_1111 ; Niedozwolone kombinacje z PB6 lub PB7
-    brlo check_single_buttons
-    rjmp error
-
-check_single_buttons:
-    ; Sprawdzanie pojedynczych przycisków 0-2
-    cpi temp, 0b1111_1110
-    breq process_chosen
-    cpi temp, 0b1111_1101
-    breq process_chosen
-    cpi temp, 0b1111_1011
-    breq process_chosen
-
-    rjmp main
+	rjmp error
 
 ; S2 - Stan po poprawnym wybraniu procesu
-process_chosen:
-    mov process, temp
+process_choosen:
     out portc, process
-    rcall debounce_delay
+	in temp, pinb
+	rcall debounce_delay
+	andi temp, mask
+	cpi temp, mask
+    breq process_choosen
 
-wait_for_start:
-    in temp, pinb
-    sbic pinb, start_button
-    rjmp wait_for_start
-    rcall debounce_delay
+	cpi temp, 0b01000111
+	breq simulate_process
 
-    rjmp simulate_process
-
-; S4 - Stan cyklicznego wykonywania wybranego procesu
-simulate_process:
-    ; Zapalenie odpowiedniej diody (bity 3-5)
-    mov sim_process, process
-    sec
-    rol sim_process
-    rol sim_process
-    rol sim_process
-    andi sim_process, 0b0011_1000
-    out portc, sim_process
-    rcall debounce_delay
-
-wait_for_stop:
-    in temp, pinb
-    sbic pinb, stop_button
-    rjmp wait_for_stop
-    rcall debounce_delay
-
-    rjmp stop_process
-
-; S42 - Stan po zatrzymaniu procesu
-stop_process:
-    out portc, process
-    rjmp main
+    cpi temp, 0b11000110
+	ldi process, 0b11111110
+	breq process_choosen
+	cpi temp, 0b11000101
+	ldi process, 0b11111101
+	breq process_choosen
+	cpi temp, 0b11000011
+	ldi process, 0b11111011
+	breq process_choosen
 
 ; S3 - Stan po niepoprawnym wyborze
 error:
     out portc, err
-    rcall debounce_delay
 
-wait_for_valid_input:
     in temp, pinb
-    cpi temp, 0b1111_1110
-    breq process_chosen
-    cpi temp, 0b1111_1101
-    breq process_chosen
-    cpi temp, 0b1111_1011
-    breq process_chosen
+	rcall debounce_delay
 
-    rjmp wait_for_valid_input
+	cpi temp, 0b11000110
+	ldi process, 0b11111110
+	breq process_choosen
+	cpi temp, 0b11000101
+	ldi process, 0b11111101
+	breq process_choosen
+	cpi temp, 0b11000011
+	ldi process, 0b11111011
+	breq process_choosen
+
+    rjmp error
+
+; S4 - Stan cyklicznego wykonywania wybranego procesu
+simulate_process:
+    ; Zapalenie odpowiedniej diody (bity 3-5)
+    call sim
+	in temp, pinb
+	rcall debounce_delay
+	andi temp, mask
+	cpi temp, mask
+	breq simulate_process
+
+wait_for_stop:
+    in temp, pinb
+	rcall debounce_delay
+	in temp2, pinb
+	andi temp, mask
+	andi temp2, mask
+	cp temp, temp2
+	brne wait_for_stop
+
+	sbis pinb, stop_button
+    rjmp process_choosen
+
+	rjmp process_choosen
